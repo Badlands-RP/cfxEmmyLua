@@ -28,16 +28,12 @@ class UsageTypeProvider : UsageTypeProviderEx {
         val FUNCTION_CALL = UsageType("Function call")
     }
 
-    override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
+    override fun getUsageType(element: PsiElement, targets: Array<out UsageTarget>): UsageType? {
         if (element is LuaPsiElement) {
             val parent = element.parent
             if (parent is LuaCallExpr)
                 return FUNCTION_CALL
         }
         return null
-    }
-
-    override fun getUsageType(element: PsiElement): UsageType? {
-        return getUsageType(element, emptyArray())
     }
 }

@@ -20,15 +20,13 @@ import com.intellij.ide.SelectInTarget
 import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
-import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 import com.intellij.ide.projectView.impl.ProjectTreeStructure
 import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
-import com.intellij.ide.util.treeView.AbstractTreeBuilder
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.AbstractTreeUpdater
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.korioz.intellij.lua.lang.LuaFileType
@@ -38,7 +36,7 @@ import com.korioz.intellij.lua.project.nodes.LuaPsiDirectoryNode
 import javax.swing.Icon
 import javax.swing.tree.DefaultTreeModel
 
-class LuaProjectViewPane(project: Project) : AbstractProjectViewPSIPane(project), Disposable {
+class LuaProjectViewPane(project: Project) : AbstractProjectViewPane(project), Disposable {
     private val connection = project.messageBus.connect()
 
     init {
@@ -55,12 +53,6 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPSIPane(project)
 
     override fun getId() = ID
 
-    override fun createTreeUpdater(builder: AbstractTreeBuilder): AbstractTreeUpdater {
-        return object : AbstractTreeUpdater(builder) {
-
-        }
-    }
-
     override fun getTitle(): String {
         return "EmmyLua Explorer"
     }
@@ -68,11 +60,11 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPSIPane(project)
     override fun createSelectInTarget(): SelectInTarget {
         return object : ProjectViewSelectInTarget(myProject) {
             override fun toString(): String {
-                return title
+                return this@LuaProjectViewPane.title
             }
 
             override fun getMinorViewId(): String {
-                return id
+                return this@LuaProjectViewPane.id
             }
         }
     }
@@ -98,10 +90,12 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPSIPane(project)
     }
 
     override fun createTree(model: DefaultTreeModel): ProjectViewTree {
-        return LuaProjectTreeView(model)
+        return ProjectViewTree(model)
     }
 
-    private inner class LuaProjectTreeView(model: DefaultTreeModel) : ProjectViewTree(myProject, model)
+    override fun dispose() {
+        connection.disconnect()
+    }
 }
 
 private class LuaTreeStructureProvider : TreeStructureProvider {

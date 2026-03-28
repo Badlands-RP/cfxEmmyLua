@@ -16,7 +16,6 @@
 
 package com.korioz.intellij.lua.hierarchy.call
 
-import com.intellij.ide.hierarchy.CallHierarchyBrowserBase
 import com.intellij.ide.hierarchy.HierarchyBrowser
 import com.intellij.ide.hierarchy.HierarchyProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -36,6 +35,6 @@ class LuaCallHierarchyProvider : HierarchyProvider {
     }
 
     override fun browserActivated(hierarchyBrowser: HierarchyBrowser) {
-        (hierarchyBrowser as LuaCallHierarchyBrowser).changeView(CallHierarchyBrowserBase.CALLER_TYPE)
+        (hierarchyBrowser as LuaCallHierarchyBrowser).changeView(LuaCallHierarchyBrowser.CALLER_TYPE)
     }
 }

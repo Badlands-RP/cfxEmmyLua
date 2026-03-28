@@ -32,6 +32,8 @@ import javax.swing.JTree
 class LuaCallHierarchyBrowser(element: PsiElement) : CallHierarchyBrowserBase(element.project, element) {
     companion object {
         private const val GROUP_LUA_CALL_HIERARCHY_POPUP = "LuaCallHierarchyPopupMenu"
+        const val CALLER_TYPE = "Callers"
+        const val CALLEE_TYPE = "Callees"
     }
 
     override fun isApplicableElement(element: PsiElement): Boolean {
@@ -58,14 +60,14 @@ class LuaCallHierarchyBrowser(element: PsiElement) : CallHierarchyBrowserBase(el
         val callerTree = createHierarchyTree(group)
         val calleeTree = createHierarchyTree(group)
 
-        trees[CallHierarchyBrowserBase.CALLER_TYPE] = callerTree
-        trees[CallHierarchyBrowserBase.CALLEE_TYPE] = calleeTree
+        trees[CALLER_TYPE] = callerTree
+        trees[CALLEE_TYPE] = calleeTree
     }
 
     override fun createHierarchyTreeStructure(typeName: String, psiElement: PsiElement): HierarchyTreeStructure? =
             when (typeName) {
-                CallHierarchyBrowserBase.CALLER_TYPE -> LuaCallerFunctionTreeStructure(myProject, psiElement)
-                CallHierarchyBrowserBase.CALLEE_TYPE -> LuaCalleeFunctionTreeStructure(myProject, psiElement)
+                CALLER_TYPE -> LuaCallerFunctionTreeStructure(myProject, psiElement)
+                CALLEE_TYPE -> LuaCalleeFunctionTreeStructure(myProject, psiElement)
                 else -> null
             }
 }

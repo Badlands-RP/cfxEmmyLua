@@ -22,7 +22,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.TreeExpander
 import com.intellij.ide.projectView.TreeStructureProvider
-import com.intellij.ide.util.treeView.AbstractTreeBuilder
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.ide.util.treeView.NodeRenderer
@@ -185,24 +184,23 @@ class LuaCheckPanel(val project: Project) : SimpleToolWindowPanel(false), DataPr
     }
 }
 
-class LuaCheckTreeBuilder(tree: JTree, model: DefaultTreeModel, val project: Project)
-    : AbstractTreeBuilder(tree, model, LuaCheckTreeStructure(project), null, false) {
+class LuaCheckTreeBuilder(val tree: JTree, val model: DefaultTreeModel, val project: Project) {
+    private val treeStructure = LuaCheckTreeStructure(project)
     var isAutoScrollMode: Boolean = false
     var arePackagesShown: Boolean = true
     var showPreview: Boolean = false
 
-    override fun initRootNode() {
-        super.initRootNode()
+    fun initRootNode() {
         performUpdate()
     }
 
     fun clear() {
-        val root = rootElement as LCRootNode
+        val root = treeStructure.root
         root.clear()
     }
 
     fun addFile(file: PsiFile): LCPsiFileNode {
-        val root = rootElement as LCRootNode
+        val root = treeStructure.root
         val fileNode = LCPsiFileNode(project, file)
         root.append(fileNode)
         return fileNode
@@ -213,7 +211,19 @@ class LuaCheckTreeBuilder(tree: JTree, model: DefaultTreeModel, val project: Pro
     }
 
     fun performUpdate() {
-        queueUpdateFrom(rootNode, true)
+        val root = model.root as DefaultMutableTreeNode
+        root.removeAllChildren()
+        buildTreeNodes(root, treeStructure.root)
+        model.reload()
+    }
+
+    private fun buildTreeNodes(parent: DefaultMutableTreeNode, element: Any) {
+        val children = treeStructure.getChildElements(element)
+        for (child in children) {
+            val childNode = DefaultMutableTreeNode(child)
+            parent.add(childNode)
+            buildTreeNodes(childNode, child)
+        }
     }
 
     fun collapseAll() {
@@ -225,7 +235,11 @@ class LuaCheckTreeBuilder(tree: JTree, model: DefaultTreeModel, val project: Pro
     }
 
     fun expandAll() {
-        ui.expandAll {  }
+        var rc = 0
+        while (rc < tree.rowCount) {
+            tree.expandRow(rc)
+            rc++
+        }
     }
 }
 
