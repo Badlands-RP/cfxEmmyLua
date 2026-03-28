@@ -122,7 +122,7 @@ public class LuaSettingsPanel implements SearchableConfigurable, Configurable.No
                 settings.getAttachDebugCaptureStd() != captureStd.isSelected() ||
                 settings.getAttachDebugDefaultCharsetName() != defaultCharset.getSelectedItem() ||
                 settings.getLanguageLevel() != languageLevel.getSelectedItem() ||
-                !ArrayUtil.equals(settings.getAdditionalSourcesRoot(), additionalRoots.getRoots(), String::compareTo);
+                !java.util.Arrays.equals(settings.getAdditionalSourcesRoot(), additionalRoots.getRoots());
     }
 
     @Override

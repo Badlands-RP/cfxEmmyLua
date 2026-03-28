@@ -34,7 +34,11 @@ public class LuaBundle {
     @Nullable
     public static String messageOfNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
                                        @NotNull Object... params) {
-        return CommonBundle.messageOfNull(getBundle(), key, params);
+        try {
+            return CommonBundle.message(getBundle(), key, params);
+        } catch (java.util.MissingResourceException e) {
+            return null;
+        }
     }
 
     private static Reference<ResourceBundle> ourBundle;
