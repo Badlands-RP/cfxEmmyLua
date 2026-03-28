@@ -216,6 +216,10 @@ intellijPlatform {
 }
 
 tasks {
+    patchPluginXml {
+        dependsOn("installEmmyDebugger")
+    }
+
     buildPlugin {
         dependsOn("installEmmyDebugger")
         archiveBaseName.set(buildVersionData.archiveName)
