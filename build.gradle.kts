@@ -181,7 +181,7 @@ dependencies {
     intellijPlatform {
         intellijIdeaUltimate(buildVersionData.ideaSDKVersion)
         bundledPlugin("com.intellij.java")
-        bundledModule("com.intellij.spellchecker")
+        bundledModule("intellij.spellchecker")
     }
 }
 
