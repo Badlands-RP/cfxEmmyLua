@@ -17,7 +17,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>com.korioz</id>
     <name>cfxEmmyLua</name>
-    <version>1.4.1</version>
+    <version>1.5.0</version>
     <vendor email="45950144+Korioz@users.noreply.github.com">Korioz</vendor>
     <category>Custom Languages</category>
     <description><![CDATA[
@@ -69,6 +69,10 @@
     ]]></description>
 
     <change-notes><![CDATA[
+    <strong>1.5.0</strong>
+    <ul>
+        <li>[NEW] compatible with IDEA261</li>
+    </ul>
     <strong>1.4.2</strong>
     <ul>
         <li>[NEW] compatible with IDEA231</li>

@@ -16,7 +16,7 @@ jobs:
 
     env:
       CI: true
-      CI_BUILD_VERSION: 1.3.7.${{ github.run_number }}
+      CI_BUILD_VERSION: 1.5.0.${{ github.run_number }}
 
     steps:
       - name: Checkout
@@ -28,8 +28,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build 2023.1
-        run: ./gradlew buildPlugin -DIDEA_VER=231
+      - name: Build 2026.1
+        run: ./gradlew buildPlugin -DIDEA_VER=261
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
