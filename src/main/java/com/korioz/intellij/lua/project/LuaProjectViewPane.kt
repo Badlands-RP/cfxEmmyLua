@@ -21,20 +21,20 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 import com.intellij.ide.projectView.impl.ProjectTreeStructure
-import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.actionSystem.ActionCallback
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.korioz.intellij.lua.lang.LuaFileType
 import com.korioz.intellij.lua.lang.LuaIcons
 import com.korioz.intellij.lua.project.nodes.LuaProjectRootNode
 import com.korioz.intellij.lua.project.nodes.LuaPsiDirectoryNode
 import javax.swing.Icon
-import javax.swing.tree.DefaultTreeModel
+import javax.swing.JComponent
 
 class LuaProjectViewPane(project: Project) : AbstractProjectViewPane(project), Disposable {
     private val connection = project.messageBus.connect()
@@ -69,8 +69,8 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPane(project), D
         }
     }
 
-    override fun createStructure(): ProjectAbstractTreeStructureBase {
-        return object : ProjectTreeStructure(myProject, id) {
+    override fun createComponent(): JComponent {
+        myTreeStructure = object : ProjectTreeStructure(myProject, id) {
             override fun createRoot(project: Project, settings: ViewSettings): AbstractTreeNode<*> {
                 return LuaProjectRootNode(project, settings)
             }
@@ -79,6 +79,14 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPane(project), D
                 return mutableListOf(LuaTreeStructureProvider())
             }
         }
+        return componentToFocus
+    }
+
+    override fun updateFromRoot(restoreExpandedPaths: Boolean): ActionCallback {
+        return ActionCallback.DONE
+    }
+
+    override fun select(element: Any?, file: VirtualFile?, requestFocus: Boolean) {
     }
 
     override fun getIcon(): Icon {
@@ -87,10 +95,6 @@ class LuaProjectViewPane(project: Project) : AbstractProjectViewPane(project), D
 
     override fun getWeight(): Int {
         return 10
-    }
-
-    override fun createTree(model: DefaultTreeModel): ProjectViewTree {
-        return ProjectViewTree(model)
     }
 
     override fun dispose() {

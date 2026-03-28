@@ -36,4 +36,8 @@ class UsageTypeProvider : UsageTypeProviderEx {
         }
         return null
     }
+
+    override fun getUsageType(element: PsiElement): UsageType? {
+        return getUsageType(element, emptyArray())
+    }
 }
