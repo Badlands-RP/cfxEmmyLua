@@ -19,7 +19,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.ByteArrayOutputStream
 
 plugins {
-    id("org.jetbrains.intellij").version("1.17.4")
+    id("org.jetbrains.intellij.platform").version("2.13.1")
     id("org.jetbrains.kotlin.jvm").version("2.1.0")
     id("de.undercouch.download").version("5.6.0")
 }
@@ -31,21 +31,17 @@ data class BuildData(
     val sinceBuild: String,
     val untilBuild: String,
     val archiveName: String = "cfxEmmyLua",
-    val jvmTarget: String = "1.8",
-    val targetCompatibilityLevel: JavaVersion = JavaVersion.VERSION_17,
-    val explicitJavaDependency: Boolean = true,
-    // https://github.com/JetBrains/gradle-intellij-plugin/issues/403#issuecomment-542890849
-    val instrumentCodeCompilerVersion: String = ideaSDKVersion
+    val jvmTarget: String = "17",
+    val targetCompatibilityLevel: JavaVersion = JavaVersion.VERSION_17
 )
 
 val buildDataList = listOf(
     BuildData(
         ideaSDKShortVersion = "261",
         ideaSDKVersion = "2026.1",
-        sinceBuild = "231",
+        sinceBuild = "261",
         untilBuild = "261.*",
-        jvmTarget = "17",
-        targetCompatibilityLevel = JavaVersion.VERSION_21
+        jvmTarget = "17"
     ),
     BuildData(
         ideaSDKShortVersion = "231",
@@ -173,80 +169,83 @@ task("installEmmyDebugger", type = Copy::class) {
     destinationDir = file("src/main/resources")
 }
 
-project(":") {
-    repositories {
-        maven(url = "https://www.jetbrains.com/intellij-repository/releases")
-        mavenCentral()
-    }
+repositories {
+    mavenCentral()
 
-    dependencies {
-        implementation(fileTree(baseDir = "libs") { include("*.jar") })
-        implementation("com.google.code.gson:gson:2.8.6")
-        implementation("org.scala-sbt.ipcsocket:ipcsocket:1.3.0")
-        implementation("org.luaj:luaj-jse:3.0.1")
-        implementation("org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5")
-        implementation("com.jgoodies:forms:1.2.1")
+    intellijPlatform {
+        defaultRepositories()
     }
+}
 
-    sourceSets {
-        main {
-            java.srcDirs("gen", "src/main/compat")
-            resources.exclude("debugger/**")
-            resources.exclude("std/**")
+dependencies {
+    implementation(fileTree(baseDir = "libs") { include("*.jar") })
+    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("org.scala-sbt.ipcsocket:ipcsocket:1.3.0")
+    implementation("org.luaj:luaj-jse:3.0.1")
+    implementation("org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5")
+    implementation("com.jgoodies:forms:1.2.1")
+
+    intellijPlatform {
+        intellijIdeaUltimate(buildVersionData.ideaSDKVersion)
+        bundledPlugin("com.intellij.java")
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDirs("gen", "src/main/compat")
+        resources.exclude("debugger/**")
+        resources.exclude("std/**")
+    }
+}
+
+configure<JavaPluginExtension> {
+    sourceCompatibility = buildVersionData.targetCompatibilityLevel
+    targetCompatibility = buildVersionData.targetCompatibilityLevel
+}
+
+intellijPlatform {
+    buildSearchableOptions = false
+    instrumentCode = true
+    projectName = project.name
+    sandboxContainer = layout.buildDirectory.dir("${buildVersionData.ideaSDKShortVersion}/idea-sandbox")
+
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = buildVersionData.sinceBuild
+            untilBuild = buildVersionData.untilBuild
         }
     }
 
-    configure<JavaPluginExtension> {
-        sourceCompatibility = buildVersionData.targetCompatibilityLevel
-        targetCompatibility = buildVersionData.targetCompatibilityLevel
+    publishing {
+        token = providers.environmentVariable("IDEA_PUBLISH_TOKEN")
+    }
+}
+
+tasks {
+    buildPlugin {
+        dependsOn("installEmmyDebugger")
+        archiveBaseName.set(buildVersionData.archiveName)
+        from(fileTree(resDir) { include("!!DONT_UNZIP_ME!!.txt") }) {
+            into("/${project.name}")
+        }
     }
 
-    intellij {
-        type.set("IU")
-        updateSinceUntilBuild.set(false)
-        downloadSources.set(!isCI)
-        version.set(buildVersionData.ideaSDKVersion)
-        sandboxDir.set("${project.buildDir}/${buildVersionData.ideaSDKShortVersion}/idea-sandbox")
+    compileKotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(buildVersionData.jvmTarget))
+        }
     }
 
-    tasks {
-        buildPlugin {
-            dependsOn("installEmmyDebugger")
-            archiveBaseName.set(buildVersionData.archiveName)
-            from(fileTree(resDir) { include("!!DONT_UNZIP_ME!!.txt") }) {
-                into("/${project.name}")
+    withType<org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask> {
+        doLast {
+            copy {
+                from("src/main/resources/std")
+                into("${defaultDestinationDirectory.get().asFile}/${intellijPlatform.projectName.get()}/std")
             }
-        }
-
-        compileKotlin {
-            kotlinOptions {
-                jvmTarget = buildVersionData.jvmTarget
-            }
-        }
-
-        patchPluginXml {
-            sinceBuild.set(buildVersionData.sinceBuild)
-            untilBuild.set(buildVersionData.untilBuild)
-        }
-
-        instrumentCode {
-            compilerVersion.set(buildVersionData.instrumentCodeCompilerVersion)
-        }
-
-        publishPlugin {
-            token.set(System.getenv("IDEA_PUBLISH_TOKEN"))
-        }
-
-        withType<org.jetbrains.intellij.tasks.PrepareSandboxTask> {
-            doLast {
-                copy {
-                    from("src/main/resources/std")
-                    into("$destinationDir/${pluginName.get()}/std")
-                }
-                copy {
-                    from("src/main/resources/debugger")
-                    into("$destinationDir/${pluginName.get()}/debugger")
-                }
+            copy {
+                from("src/main/resources/debugger")
+                into("${defaultDestinationDirectory.get().asFile}/${intellijPlatform.projectName.get()}/debugger")
             }
         }
     }
