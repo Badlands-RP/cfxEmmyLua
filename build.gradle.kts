@@ -90,29 +90,22 @@ val isCI = System.getenv("CI") != null
 // CI
 if (isCI) {
     version = System.getenv("CI_BUILD_VERSION")
-    exec {
-        executable = "git"
-        args("config", "--global", "user.email", "45950144+Korioz@users.noreply.github.com")
-    }
-    exec {
-        executable = "git"
-        args("config", "--global", "user.name", "korioz")
-    }
+    ProcessBuilder("git", "config", "--global", "user.email", "45950144+Korioz@users.noreply.github.com").start().waitFor()
+    ProcessBuilder("git", "config", "--global", "user.name", "korioz").start().waitFor()
 }
 
 version = "${version}-IDEA${buildVersion}"
 
 fun getRev(): String {
-    val os = ByteArrayOutputStream()
-    exec {
-        executable = "git"
-        args("rev-parse", "HEAD")
-        standardOutput = os
-    }
-    return os.toString().substring(0, 7)
+    val process = ProcessBuilder("git", "rev-parse", "HEAD")
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().readText().trim()
+    process.waitFor()
+    return output.substring(0, 7)
 }
 
-task("downloadEmmyDebugger", type = Download::class) {
+tasks.register<Download>("downloadEmmyDebugger") {
     src(arrayOf(
         "https://github.com/EmmyLua/EmmyLuaDebugger/releases/download/${emmyDebuggerVersion}/darwin-arm64.zip",
         "https://github.com/EmmyLua/EmmyLuaDebugger/releases/download/${emmyDebuggerVersion}/darwin-x64.zip",
@@ -124,7 +117,7 @@ task("downloadEmmyDebugger", type = Download::class) {
     dest("temp")
 }
 
-task("unzipEmmyDebugger", type = Copy::class) {
+tasks.register<Copy>("unzipEmmyDebugger") {
     dependsOn("downloadEmmyDebugger")
     from(zipTree("temp/win32-x86.zip")) {
         into("windows/x86")
@@ -141,10 +134,10 @@ task("unzipEmmyDebugger", type = Copy::class) {
     from(zipTree("temp/linux-x64.zip")) {
         into("linux")
     }
-    destinationDir = file("temp")
+    into("temp")
 }
 
-task("installEmmyDebugger", type = Copy::class) {
+tasks.register<Copy>("installEmmyDebugger") {
     dependsOn("unzipEmmyDebugger")
     from("temp/windows/x64/") {
         include("emmy_core.dll")
@@ -166,7 +159,7 @@ task("installEmmyDebugger", type = Copy::class) {
         include("emmy_core.dylib")
         into("debugger/emmy/mac/arm64")
     }
-    destinationDir = file("src/main/resources")
+    into("src/main/resources")
 }
 
 repositories {
